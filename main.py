@@ -7,6 +7,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 
+MODEL_SAVE_LOCATION = "mnist_cnn.pt"
 
 class Net(nn.Module):
     def __init__(self):
@@ -122,6 +123,12 @@ def main():
 
     model = Net().to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
+
+    try:
+        model.load_state_dict(torch.load(MODEL_SAVE_LOCATION))
+        print("Loaded Model from file '" + MODEL_SAVE_LOCATION + "'")
+    except FileNotFoundError as e:
+        print("Could not load file '" + MODEL_SAVE_LOCATION + "'")
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):
