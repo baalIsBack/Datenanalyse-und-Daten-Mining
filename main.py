@@ -101,7 +101,7 @@ def main():
     model = Net().to(device)
     print(model)
     print()
-    optimizer = optim.Adam(model.parameters())#TODO change learning algorithm to backprop maybe?
+    optimizer = optim.Adadelta(model.parameters())#TODO change learning algorithm to backprop maybe?
 
     try:
         model.load_state_dict(torch.load(MODEL_SAVE_LOCATION))
