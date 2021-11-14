@@ -15,6 +15,21 @@ def current_milli_time():
 
 def Net():
     layers = []
+    layers.append(nn.Conv2d(1, 32, (3,3)))
+    #layers.append(nn.ReLU())
+    layers.append(nn.Conv2d(32, 64, (3,3)))
+    #layers.append(nn.ReLU())
+    layers.append(nn.MaxPool2d(2))
+    #layers.append(nn.Dropout(0.25))
+    layers.append(nn.Flatten(1))
+    layers.append(nn.Linear(9216, 128))
+    #layers.append(nn.Dropout(0.5))
+    layers.append(nn.Linear(128, 10))
+    layers.append(nn.LogSoftmax(1))
+    return nn.Sequential(*layers)
+
+def Net2():
+    layers = []
     layers.append(nn.Conv2d(1, 32, (3,3), 1))
     layers.append(nn.ReLU())
     layers.append(nn.Conv2d(32, 64, (3,3), 1))
@@ -86,7 +101,7 @@ def main():
     model = Net().to(device)
     print(model)
     print()
-    optimizer = optim.Adadelta(model.parameters(), lr = 1.0)#TODO change learning algorithm to backprop maybe?
+    optimizer = optim.Adam(model.parameters())#TODO change learning algorithm to backprop maybe?
 
     try:
         model.load_state_dict(torch.load(MODEL_SAVE_LOCATION))
