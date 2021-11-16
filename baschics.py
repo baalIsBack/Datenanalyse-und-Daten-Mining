@@ -1,6 +1,7 @@
 # Author: Julian Haubold
-# https://www.youtube.com/watch?v=GIsg-ZUy0MY&t=819s&ab_channel=freeCodeCamp.org bis zu min 19
+# https://www.youtube.com/watch?v=GIsg-ZUy0MY&t=819s&ab_channel=freeCodeCamp.org bis zu min 35
 import torch
+import numpy as np
 
 print("______ Different tensors")
 # Number
@@ -30,3 +31,22 @@ print(t4.shape)
 
 
 print("\n\n______ Tensor operations and gradients")
+# Create Tensors
+x = torch.tensor(3.)
+w = torch.tensor(4., requires_grad=True)
+b = torch.tensor(5., requires_grad=True)
+
+# Arithmetic operations
+y = w * x + b
+y.backward()
+
+# Display gradients
+print('dy/dx:', x.grad)
+print('dy/dw:', w.grad)
+print('dy/db:', b.grad)
+
+print("\n\n______ Interoperability with Numpy")
+x = np.array([[1,2],[3,4],[5,6]])
+print (x)
+y = torch.from_numpy(x)
+print(y)
