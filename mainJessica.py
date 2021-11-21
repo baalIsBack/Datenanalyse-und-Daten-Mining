@@ -26,7 +26,6 @@ def NeuralNetwork():
     layers.append(nn.Linear(64, 10))
     return nn.Sequential(*layers)
 
-
 #training for a single Epoch
 def train(model, device, train_loader, optimizer,epoch):
     print(" Start of Training Epoch", epoch, ": ")
