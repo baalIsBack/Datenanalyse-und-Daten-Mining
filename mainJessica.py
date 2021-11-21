@@ -14,24 +14,17 @@ learningrate = 0.01
 
 
 # definition of the Neural Network Model with 4 Layers
-class NeuralNetwork(nn.Module):
-    def __init__(self):
-        super(NeuralNetwork, self).__init__()
-        self.convolutionalLayer = nn.Conv2d(1, 16, 3, 1)
-        self.linearLayer1 = nn.Linear(26*26*16, 128)
-        self.linearLayer2=nn.Linear(128,64)
-        self.linearLayer3 = nn.Linear(64, 10)
-
-    def forward(self, x):
-        x = self.convolutionalLayer(x)
-        x = nn.functional.relu(x)
-        x = torch.flatten(x, 1)
-        x = self.linearLayer1(x)
-        x = nn.functional.relu(x)
-        x = self.linearLayer2(x)
-        x = nn.functional.relu(x)
-        x = self.linearLayer3(x)
-        return x
+def NeuralNetwork():
+    layers=[]
+    layers.append(nn.Conv2d(1, 16, 3, 1))
+    layers.append(nn.ReLU())
+    layers.append(nn.Flatten(1))
+    layers.append(nn.Linear(10816, 128))
+    layers.append(nn.ReLU())
+    layers.append(nn.Linear(128,64))
+    layers.append(nn.ReLU())
+    layers.append(nn.Linear(64, 10))
+    return nn.Sequential(*layers)
 
 #training for a single Epoch
 def train(model, device, train_loader, optimizer,epoch):
