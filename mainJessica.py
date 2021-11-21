@@ -18,7 +18,7 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
         self.convolutionalLayer = nn.Conv2d(1, 16, 3, 1)
-        self.linearLayer1 = nn.Linear(10816, 128)
+        self.linearLayer1 = nn.Linear(26*26*16, 128)
         self.linearLayer2=nn.Linear(128,64)
         self.linearLayer3 = nn.Linear(64, 10)
 
