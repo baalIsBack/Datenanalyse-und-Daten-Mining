@@ -12,17 +12,18 @@ numberOfEpochs = 5
 batchSize = 5
 learningrate = 0.01
 
-
 # definition of the Neural Network Model with 4 Layers
 def NeuralNetwork():
     layers=[]
     layers.append(nn.Conv2d(1, 16, 3, 1))
     layers.append(nn.ReLU())
     layers.append(nn.Flatten(1))
-    layers.append(nn.Linear(10816, 128))
+    layers.append(nn.Linear(26*26*16, 128))
     layers.append(nn.ReLU())
+    layers.append(nn.Dropout(0.25))
     layers.append(nn.Linear(128,64))
     layers.append(nn.ReLU())
+    layers.append(nn.Dropout(0.5))
     layers.append(nn.Linear(64, 10))
     return nn.Sequential(*layers)
 
