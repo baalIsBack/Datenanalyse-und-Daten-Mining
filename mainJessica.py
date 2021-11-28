@@ -8,8 +8,8 @@ from torch.optim.lr_scheduler import StepLR
 from torchvision.datasets import MNIST
 
 # definition of Parameters
-numberOfEpochs = 5
-batchSize = 5
+numberOfEpochs = 3
+batchSize = 12
 learningrate = 0.01
 
 # definition of the Neural Network Model with 4 Layers
