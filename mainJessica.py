@@ -39,10 +39,11 @@ def train(model, device, train_loader, optimizer,epoch):
         loss = nn.CrossEntropyLoss()(output,target)
         loss.backward()
         optimizer.step()
-        #print(' Progress: {:.0f}% with loss: {:.6f}'.format
-        #    (
-        #    100. * batch / len(train_loader), loss.item())
-        #    )
+        if batch % 10 == 0:
+            print(' Progress: {:.0f}% with loss: {:.6f}'.format
+                (
+                100. * batch / len(train_loader), loss.item())
+                )
 
 
 #testing Accuracy after Training Cylce for an Epoch
