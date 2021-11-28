@@ -6,6 +6,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from torch.optim.lr_scheduler import StepLR
 from torchvision.datasets import MNIST
+import syft as sy
+import time
 
 # definition of Parameters
 numberOfEpochs = 5
@@ -32,12 +34,17 @@ def train(model, device, train_loader, optimizer,epoch):
     print(" Start of Training Epoch", epoch, ": ")
 
     for batch, (image, target) in enumerate(train_loader):
+        model.send(image.location)
         image, target = image.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(image)
         loss = nn.CrossEntropyLoss()(output,target)
         loss.backward()
         optimizer.step()
+        model.get()
+
+        
+        loss = loss.get()
         print(' Progress: {:.0f}% with loss: {:.6f}'.format
             (
             100. * batch / len(train_loader), loss.item())
@@ -63,6 +70,16 @@ def test(model, device, test_loader,epoch):
 
 
 def main():
+    torch.manual_seed(round(time.time() * 1000))
+
+    hook = sy.TorchHook(torch)
+    CLIENTS_NUMBER = 2
+    clients = []
+    for i in range(CLIENTS_NUMBER):
+        clients.append(sy.VirtualWorker(hook, id="client" + str(i)))
+
+
+
     #check if GPU is available, otherwise use CPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -70,13 +87,15 @@ def main():
 
     #load MNIST dataset
     dataset_training = MNIST(root='./rootMNIST', train=True,download=True, transform=transform)
+    dataset_testing = MNIST(root='./rootMNIST', train=False,download=True, transform=transform)
 
-    dataset_testing =MNIST(root='./rootMNIST', train=False,download=True, transform=transform)
-
-    train_loader = DataLoader(dataset_training, batch_size=batchSize,shuffle=True)
-
-    test_loader = DataLoader(dataset_testing, batch_size=batchSize,shuffle=False)
-
+    #train_loader = DataLoader(dataset_training, batch_size=batchSize,shuffle=True)
+    #test_loader = DataLoader(dataset_testing, batch_size=batchSize,shuffle=False)
+    
+    #<federated>
+    train_loader = sy.FederatedDataLoader(dataset_training.federate(clients), batch_size=batchSize, shuffle=True)
+    test_loader = sy.FederatedDataLoader(dataset_testing.federate(clients), batch_size=batchSize, shuffle=False)
+    #</federated>
 
     print(" Number of Elements in Training Dataset:",len(dataset_training))
     print(" Number of Elements in Test Dataset:",len(dataset_testing))
