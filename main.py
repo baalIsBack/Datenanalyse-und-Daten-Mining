@@ -1,136 +1,98 @@
-from __future__ import print_function
-import argparse
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets, transforms
+import torch.nn.functional
+import torch.optim
+from torch.utils.data import DataLoader
+from torchvision import transforms
 from torch.optim.lr_scheduler import StepLR
-#
+from torchvision.datasets import MNIST
 
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3, 1)
-        self.conv2 = nn.Conv2d(32, 64, 3, 1)
-        self.dropout1 = nn.Dropout(0.25)
-        self.dropout2 = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(9216, 128)
-        self.fc2 = nn.Linear(128, 10)
+# definition of Parameters
+numberOfEpochs = 5
+batchSize = 5
+learningrate = 0.01
 
-    def forward(self, x):
-        x = self.conv1(x)
-        x = F.relu(x)
-        x = self.conv2(x)
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = self.dropout1(x)
-        x = torch.flatten(x, 1)
-        x = self.fc1(x)
-        x = F.relu(x)
-        x = self.dropout2(x)
-        x = self.fc2(x)
-        output = F.log_softmax(x, dim=1)
-        return output
+# definition of the Neural Network Model with 4 Layers
+def NeuralNetwork():
+    layers=[]
+    layers.append(nn.Conv2d(1, 16, 3, 1))
+    layers.append(nn.ReLU())
+    layers.append(nn.Flatten(1))
+    layers.append(nn.Linear(26*26*16, 128))
+    layers.append(nn.ReLU())
+    layers.append(nn.Dropout(0.25))
+    layers.append(nn.Linear(128,64))
+    layers.append(nn.ReLU())
+    layers.append(nn.Dropout(0.5))
+    layers.append(nn.Linear(64, 10))
+    return nn.Sequential(*layers)
 
+#training for a single Epoch
+def train(model, device, train_loader, optimizer,epoch):
+    print(" Start of Training Epoch", epoch, ": ")
 
-def train(args, model, device, train_loader, optimizer, epoch):
-    model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device), target.to(device)
+    for batch, (image, target) in enumerate(train_loader):
+        image, target = image.to(device), target.to(device)
         optimizer.zero_grad()
-        output = model(data)
-        loss = F.nll_loss(output, target)
+        output = model(image)
+        loss = nn.CrossEntropyLoss()(output,target)
         loss.backward()
         optimizer.step()
-        if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
-            if args.dry_run:
-                break
+        print(' Progress: {:.0f}% with loss: {:.6f}'.format
+            (
+            100. * batch / len(train_loader), loss.item())
+            )
 
 
-def test(model, device, test_loader):
-    model.eval()
-    test_loss = 0
-    correct = 0
+#testing Accuracy after Training Cylce for an Epoch
+def test(model, device, test_loader,epoch):
+    correctly_classified = 0
+    total = 0
     with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
-            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-            correct += pred.eq(target.view_as(pred)).sum().item()
-
-    test_loss /= len(test_loader.dataset)
-
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+        for image, target in test_loader:
+            image, target= image.to(device),target.to(device)
+            outputs = model(image)
+            _,predicted = torch.max(outputs, 1)
+            total += target.size(0)
+            correctly_classified += (predicted == target).sum().item()
+    accuracy=100.0 * correctly_classified / total
+    print(' Accuracy in Epoch {}: {:.0f}% \n'.format(
+        epoch,
+        accuracy
+        ))
 
 
 def main():
-    # Training settings
-    parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                        help='input batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                        help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=14, metavar='N',
-                        help='number of epochs to train (default: 14)')
-    parser.add_argument('--lr', type=float, default=1.0, metavar='LR',
-                        help='learning rate (default: 1.0)')
-    parser.add_argument('--gamma', type=float, default=0.7, metavar='M',
-                        help='Learning rate step gamma (default: 0.7)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
-    parser.add_argument('--dry-run', action='store_true', default=False,
-                        help='quickly check a single pass')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                        help='how many batches to wait before logging training status')
-    parser.add_argument('--save-model', action='store_true', default=False,
-                        help='For Saving the current Model')
-    args = parser.parse_args()
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    #check if GPU is available, otherwise use CPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    torch.manual_seed(args.seed)
+    transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.1307,), (0.3081,))])
 
-    device = torch.device("cuda" if use_cuda else "cpu")
+    #load MNIST dataset
+    dataset_training = MNIST(root='./rootMNIST', train=True,download=True, transform=transform)
 
-    train_kwargs = {'batch_size': args.batch_size}
-    test_kwargs = {'batch_size': args.test_batch_size}
-    if use_cuda:
-        cuda_kwargs = {'num_workers': 1,
-                       'pin_memory': True,
-                       'shuffle': True}
-        train_kwargs.update(cuda_kwargs)
-        test_kwargs.update(cuda_kwargs)
+    dataset_testing =MNIST(root='./rootMNIST', train=False,download=True, transform=transform)
 
-    transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-        ])
-    dataset1 = datasets.MNIST('../data', train=True, download=True,
-                       transform=transform)
-    dataset2 = datasets.MNIST('../data', train=False,
-                       transform=transform)
-    train_loader = torch.utils.data.DataLoader(dataset1,**train_kwargs)
-    test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
+    train_loader = DataLoader(dataset_training, batch_size=batchSize,shuffle=True)
 
-    model = Net().to(device)
-    optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
+    test_loader = DataLoader(dataset_testing, batch_size=batchSize,shuffle=False)
 
-    scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
-    for epoch in range(1, args.epochs + 1):
-        train(args, model, device, train_loader, optimizer, epoch)
-        test(model, device, test_loader)
+
+    print(" Number of Elements in Training Dataset:",len(dataset_training))
+    print(" Number of Elements in Test Dataset:",len(dataset_testing))
+    model = NeuralNetwork().to(device)
+    print(" Model:", model)
+
+    #initialisation of Gradient Descent as optimizer and  StepLR as scheduler
+    optimizer = torch.optim.SGD(model.parameters(), learningrate)
+    scheduler = StepLR(optimizer, step_size=1)
+
+    #loop over defined number of Epochs and perform training and testing for each cycle
+    for epoch in range(1, numberOfEpochs + 1):
+        train( model, device, train_loader, optimizer, epoch)
+        test(model, device, test_loader,epoch)
+        #decreases learning rate by 0.1 after each epoch
         scheduler.step()
-
-    if args.save_model:
-        torch.save(model.state_dict(), "mnist_cnn.pt")
 
 
 if __name__ == '__main__':
