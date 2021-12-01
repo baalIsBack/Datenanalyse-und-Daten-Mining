@@ -15,7 +15,7 @@ from tqdm import tqdm
 # definition of Parameters
 numberOfEpochs = 3
 batchSize = 12
-learningrate = 0.01
+learningrate = 0.001
 numberOfClients = 10
 numberOfSelectedClients = 4
 numberOfRounds = 20
@@ -108,9 +108,8 @@ def main():
 
     for model in client_models:
         model.load_state_dict(global_model.state_dict())
-
     # initialisation of Stochastic Gradient Descent as optimizer and  StepLR as scheduler for all client models
-    optimizer = [torch.optim.SGD(model.parameters(), learningrate) for model in client_models]
+    optimizer = [torch.optim.AdamW(model.parameters(), learningrate) for model in client_models]
     scheduler = [StepLR(optim, step_size=1)for optim in optimizer]
 
     #waiting 0.1s so that prints can finish before tqdm
