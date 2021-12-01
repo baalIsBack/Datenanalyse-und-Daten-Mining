@@ -11,7 +11,6 @@ from torchvision.datasets import MNIST
 from tqdm import tqdm
 
 
-
 # definition of Parameters
 numberOfEpochs = 3
 batchSize = 12
