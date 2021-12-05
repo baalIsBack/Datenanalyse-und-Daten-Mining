@@ -86,55 +86,18 @@ def main():
 
     #load MNIST dataset
     dataset_training = MNIST(root='./rootMNIST', train=True,download=True, transform=transform)
-    dataset_testing = MNIST(root='./rootMNIST', train=False,download=True, transform=transform)
-    
+
+    dataset_testing =MNIST(root='./rootMNIST', train=False,download=True, transform=transform)
+
     # Dividing the training data into num_clients, with each client having equal number of images
-    partition_of_training_data = torch.utils.data.random_split(dataset_training, [int(dataset_training.data.shape[0] / numberOfClients) for _ in range(numberOfClients)])
-    train_loader = [torch.utils.data.DataLoader(partX, batch_size=batchSize, shuffle=True) for partX in partition_of_training_data]
+    partition_of_training_data = torch.utils.data.random_split(dataset_training, [int(dataset_training.data.shape[0] / numberOfClients) for _ in
+                                                                                  range(numberOfClients)])
+
+
+    train_loader = [torch.utils.data.DataLoader(partX, batch_size=batchSize, shuffle=True) for partX  in partition_of_training_data]
+
     test_loader = DataLoader(dataset_testing, batch_size=batchSize,shuffle=False)
 
-    labels = dataset_training.train_labels
-    classified_dataset = [
-        (labels == 0).nonzero(),
-        (labels == 1).nonzero(),
-        (labels == 2).nonzero(),
-        (labels == 3).nonzero(),
-        (labels == 4).nonzero(),
-        (labels == 5).nonzero(),
-        (labels == 6).nonzero(),
-        (labels == 7).nonzero(),
-        (labels == 8).nonzero(),
-        (labels == 9).nonzero()
-    ]
-    for i in range(10):
-        classified_dataset[i] = classified_dataset[i][0:5000]
-
-    print(dataset_training[0])
-    print(classified_dataset[0][0])
-
-    partition_of_training_data = torch.utils.data.random_split(classified_dataset[0], [int(classified_dataset[0].data.shape[0] / numberOfClients) for _ in range(numberOfClients)])
-    train_loader = [torch.utils.data.DataLoader(partX, batch_size=batchSize, shuffle=True) for partX in partition_of_training_data]
-
-#    train_loader = [
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[0].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[1].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[2].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[3].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[4].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[5].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[6].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[7].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[8].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#        torch.utils.data.random_split(dataset_training, [int(classified_dataset[9].data.shape[0] / numberOfClients) for _ in range(numberOfClients)]),
-#    ]
-
-
-
-    
-
-    #train_loader[0] = classified_dataset[1]
-
-    
 
     print(" Number of Elements in Training Dataset:",len(dataset_training))
     print(" Number of Elements in Test Dataset:",len(dataset_testing))
