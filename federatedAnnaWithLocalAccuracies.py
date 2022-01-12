@@ -11,6 +11,7 @@ from torchvision import transforms
 from torch.optim.lr_scheduler import StepLR
 from torchvision.datasets import MNIST
 from tqdm import tqdm
+import skimage
 
 # definition of Parameters
 numberOfEpochs = 3
@@ -43,7 +44,7 @@ def test(model, device, test_loader):
     loss = 0
     with torch.no_grad():
         for image, target in test_loader:
-            image, target = image.to(device), target.to(device)
+            image, target = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True)).to(device), target.to(device)
             outputs = model(image)
             _, predicted = torch.max(outputs, 1)
             loss += nn.CrossEntropyLoss()(outputs, predicted).item()
@@ -61,7 +62,7 @@ def test(model, device, test_loader):
 def train_client(model, device, optimizer, train_loader, epoch):
     for epochX in range(epoch):
         for batch, (image, target) in enumerate(train_loader):
-            image, target = image.to(device), target.to(device)
+            image, target = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True)).to(device), target.to(device)
             optimizer.zero_grad()
             output = model(image)
             loss = nn.CrossEntropyLoss()(output, target)
