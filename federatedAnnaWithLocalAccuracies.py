@@ -11,6 +11,9 @@ from torchvision import transforms
 from torch.optim.lr_scheduler import StepLR
 from torchvision.datasets import MNIST
 from tqdm import tqdm
+from pprint import pprint
+from torch.utils.data import Dataset
+import random as rand
 
 # definition of Parameters
 numberOfEpochs = 3
@@ -20,6 +23,35 @@ numberOfClients = 10
 numberOfSelectedClients = 4
 numberOfRounds = 20
 
+def getOther(n):
+    x = np.random.randint(10)
+    if x == n:
+        return getOther(n)
+    return x
+
+class Dataset_RandomOther(Dataset):
+    def __init__(self, transform):
+        self.mnist = MNIST(root='./rootMNIST', train=True, download=True, transform=transform)
+
+    def __len__(self):
+        return len(self.mnist)
+
+    def __getitem__(self, idx):
+        it = list(self.mnist[idx])
+        it[-1] = getOther(it[-1])
+        return it
+
+class Dataset_Shift(Dataset):
+    def __init__(self, transform):
+        self.mnist = MNIST(root='./rootMNIST', train=True, download=True, transform=transform)
+
+    def __len__(self):
+        return len(self.mnist)
+
+    def __getitem__(self, idx):
+        it = list(self.mnist[idx])
+        it[-1] = it[-1]+1 % 10
+        return it
 
 # definition of the Neural Network Model with 4 Layers
 def NeuralNetwork():
@@ -105,6 +137,7 @@ def main():
     print('Version 1: One worker with mainly 0es')
     print('Version 2: Every worker with mainly one number')
     print('Version 3: Equal distribution of all numbers')
+    print('Version 4: One worker always wrong')
 
     version = input()
     if version == '1':
@@ -229,12 +262,23 @@ def main():
                                                          [int(dataset_training.data.shape[0] / numberOfClients) for _ in
                                                           range(numberOfClients)])
 
+    elif version == '4':
+        #Version 4
+        #one worker has everything wrong and the others are untouched
+        new_dataset_list = torch.utils.data.random_split(dataset_training,
+                                                         [int(dataset_training.data.shape[0] / numberOfClients) for _ in
+                                                          range(numberOfClients)])
+
     else:
-        exit('Number should be 1, 2 or 3')
+        exit('Number should be 1, 2, 3 or 4')
 
     # for partX in partition gets 10x train_loader, one for each worker
     # train_loader is a list of DataLoaders, using new_dataset_list instead of partition_of_training_data loads the individually distributed datasets
     train_loader = [DataLoader(partX, batch_size=batchSize, shuffle=True) for partX in new_dataset_list]
+
+    if version == '4':
+        dataset_corrupt = Dataset_RandomOther(transform)
+        train_loader[0] = DataLoader(dataset_corrupt, batch_size=batchSize, shuffle=True)
 
     # further divide data of clients into train and test
     training_loader__local_client = []
