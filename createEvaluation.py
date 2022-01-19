@@ -41,7 +41,7 @@ def addEvaluationSheet(name, wb): #Erstellung von Worksheets
             pointer += 1
     # Erstellung der Durchschnittswerte
     pointer = 2
-    for row in ws.iter_rows(2, 22, 1, 1):
+    for row in ws.iter_rows(2, 21, 1, 1):
         for cell in row:
             cell.value = "=Average(B" + str(pointer) + ":P" + str(pointer) + ")"
             pointer += 1
