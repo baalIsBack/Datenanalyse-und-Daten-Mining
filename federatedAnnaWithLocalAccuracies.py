@@ -141,17 +141,18 @@ def main():
     print('Version 1: One worker with mainly 0es')
     print('Version 2: Every worker with mainly one number')
     print('Version 3: Equal distribution of all numbers')
-    print('Version 4: One worker always wrong')
     version = input("Input: ")
-    if version != str(4):
-        print(version)
-        print('\nIs This a documentation Run? (y / press enter):')
-        doc = (True if input("Input: ").lower() == 'y' else False)
-    else:
-        doc = False
-    if(doc): # Legt die Anzahl der Runs fest
+    print('\nPlease enter a Number to select a Method:')
+    print('Method 1: pertubation data')
+    print('Method 2: corruption data')
+    print('Method 3: normal')
+    print('Method 4: opponent')
+    method = input("Input: ")
+    print('\nIs This a documentation Run? (y / press enter):')
+    doc = (True if input("Input: ").lower() == 'y' else False)
+    if doc: # Legt die Anzahl der Runs fest
         runs = int(input('Please enter a number of runs: '))
-        if(runs <1 or runs > 100):
+        if runs <1 or runs > 100:
             print("invalid number of runs")
             return
 
@@ -166,7 +167,7 @@ def main():
     for runIndex in range(runs):
         start = time.time()
 
-        print("\n\nRun Number "+runIndex)
+        print("\n\nRun Number "+str(runIndex))
         print(":::::::::::::::::::::::::::::::::::::::::::::::::::::::")
         print(":::::::::::::::::::::::::::::::::::::::::::::::::::::::")
         if(doc):
@@ -424,9 +425,9 @@ def main():
             #Documentation
             wb.save(path+'Version'+str(version)+'.xlsx')
 
-            # Time orientation
-            print("________________________")
-            print("Time spent on this run: "+str((time.time()-start)/60)+"min")
+        # Time orientation
+        print("________________________")
+        print("Time spent on this run: "+str((time.time()-start)/60)+"min")
 
 
 if __name__ == '__main__':
