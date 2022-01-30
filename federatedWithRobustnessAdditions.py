@@ -3,6 +3,7 @@ import os
 import time
 
 import numpy as np
+import numpy.random
 import torch
 import torch.nn as nn
 import torch.nn.functional
@@ -124,11 +125,58 @@ def test_HardSaltPepper(model, device, test_loader):
     with torch.no_grad():
         for image, target in test_loader:
             target =  target.to(device)
-            images_with_added_noise = torch.tensor(skimage.util.random_noise(
-                                      torch.tensor(skimage.util.random_noise(torch.tensor(skimage.util.random_noise(image
-                                                                                                , mode='s&p', salt_vs_pepper=0.5,clip=True))
-                                                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True)).to(device)
+            option1 = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option2 = torch.tensor(skimage.util.random_noise(
+                     torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option3 = torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option4 = torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option5 = torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                     torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option6 = torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            chosenPerturbation = numpy.random.choice([1, 2, 3, 4, 5, 6])
+
+            if (  chosenPerturbation == 1):
+                randomPerturbation = option1
+            elif (  chosenPerturbation == 2):
+                randomPerturbation = option2
+            elif (  chosenPerturbation == 3):
+                randomPerturbation = option3
+            elif (  chosenPerturbation == 4):
+                randomPerturbation = option4
+            elif (  chosenPerturbation == 5):
+                randomPerturbation = option5
+            elif (  chosenPerturbation == 6):
+                randomPerturbation = option6
+
+            images_with_added_noise = randomPerturbation.to(device)
             outputs = model(images_with_added_noise)
             _, predicted = torch.max(outputs, 1)
             loss += nn.CrossEntropyLoss()(outputs, predicted).item()
@@ -141,16 +189,66 @@ def test_HardSaltPepper(model, device, test_loader):
 
 
 def test_HardSaltPepperWithAutoencoder(model, device, test_loader,autoencoder):
+
+
     correctly_classified = 0
     loss = 0
     with torch.no_grad():
         for image, target in test_loader:
             target =  target.to(device)
-            images_with_added_noise = torch.tensor(skimage.util.random_noise(
-                                      torch.tensor(skimage.util.random_noise(
-                                      torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5,clip=True))
-                                                                                   , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                                   , mode='s&p', salt_vs_pepper=0.5, clip=True)).to(device)
+            option1 = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True)).to(
+                device)
+            option2 = torch.tensor(skimage.util.random_noise(
+                torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option3 = torch.tensor(skimage.util.random_noise(
+                torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                    , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option4=torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option5=torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            option6=torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
+            chosenPerturbation = numpy.random.choice([1, 2, 3, 4, 5, 6])
+
+            if (chosenPerturbation == 1):
+                randomPerturbation = option1
+            elif (chosenPerturbation == 2):
+                randomPerturbation = option2
+            elif (chosenPerturbation == 3):
+                randomPerturbation = option3
+            elif (chosenPerturbation == 4):
+                randomPerturbation = option4
+            elif (chosenPerturbation == 5):
+                randomPerturbation = option5
+            elif (chosenPerturbation == 6):
+                randomPerturbation = option6
+
+            images_with_added_noise = randomPerturbation.to(device)
             image = autoencoder(images_with_added_noise);
             outputs = model(image)
             _, predicted = torch.max(outputs, 1)
