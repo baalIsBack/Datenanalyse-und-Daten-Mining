@@ -5,7 +5,7 @@ from openpyxl import *
 numberOfClients = 10
 numberOfRounds = 20 # Die Anzahl der Runden pro Run
 numberOfRuns = 15 # Die Anzahl der Runs (Wie oft wird das Programm ausgeführt)
-path = 'Evaluation/FLStandard/'
+path = 'Evaluation/FLPerturbatedData/'
 
 def main(): # Erstellung von Workbook Versionen
     if input("Pls confirm the override / creation of the Evaluations Sheets (y) : ").lower() == "y":
