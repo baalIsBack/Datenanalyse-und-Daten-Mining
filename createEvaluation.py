@@ -1,13 +1,13 @@
 from openpyxl import *
 
-#Globale Variable und Einstellungsmoeglichkeit fuer die Anzahl der Clients
-#ACHTUNG: EXPONENTIALFALLE
+# Globale Variable und Einstellungsmoeglichkeit fuer die Anzahl der Clients
+# ACHTUNG: EXPONENTIALFALLE
 numberOfClients = 10
-numberOfRounds = 20 #Die Anzahl der Runden pro Run
-numberOfRuns = 15 #Die Anzahl der Runs (Wie oft wird das Programm ausgeführt)
-path = 'Evaluation/FLStandard/'
+numberOfRounds = 20 # Die Anzahl der Runden pro Run
+numberOfRuns = 15 # Die Anzahl der Runs (Wie oft wird das Programm ausgeführt)
+path = 'Evaluation/FLPerturbatedData/'
 
-def main(): #Erstellung von Workbook Versionen
+def main(): # Erstellung von Workbook Versionen
     if input("Pls confirm the override / creation of the Evaluations Sheets (y) : ").lower() == "y":
         addVersionWorkbook('Version1')
         addVersionWorkbook('Version2')
@@ -16,7 +16,7 @@ def main(): #Erstellung von Workbook Versionen
     else:
         print("Program aborted")
 
-def addVersionWorkbook(name): #Erstellung von einem Workbook
+def addVersionWorkbook(name): # Erstellung von einem Workbook
     if (numberOfClients > 20):
         raise AssertionError
 
@@ -34,7 +34,7 @@ def addVersionWorkbook(name): #Erstellung von einem Workbook
     wb.active = wb['Sheet']
     wb.save(path+name+'.xlsx')
 
-def addEvaluationSheet(name, wb): #Erstellung von Worksheets
+def addEvaluationSheet(name, wb): # Erstellung von Worksheets
     ws = wb.create_sheet(name)
     wb.active = ws
     ws['A1'].value = "Average"
@@ -61,19 +61,19 @@ def summary(version, wb):
     ws['C1'].value = 'Global Accuracy'
     ws['E1'].value = 'Accuracy Matritzen'
 
-    #Übernahme drei Main Werte Werte
+    # Übernahme drei Main Werte Werte
     for index in range(2,2+numberOfRounds):
         ws['A'+str(index)] = '=\'Average loss during Training\'!A'+str(index)
         ws['B' + str(index)] = '=\'Global Test loss\'!B' + str(index)
         ws['C' + str(index)] = '=\'Global Accuracy\'!C' + str(index)
 
-    #Anpassung der Zellenbreite, einfach nicht hinterfragen, dass das ganze mit 7 umgerechnet werden muss
+    # Anpassung der Zellenbreite, einfach nicht hinterfragen, dass das ganze mit 7 umgerechnet werden muss
     ws.column_dimensions['A'].width = 200/7
     ws.column_dimensions['B'].width = 120/7
     ws.column_dimensions['C'].width = 120/7
 
-    #Übernahme der Accuracy Matritzen
-    #Für jede Matrix aller Runs wird jede Spalte Aufgebaut
+    # Übernahme der Accuracy Matritzen
+    # Für jede Matrix aller Runs wird jede Spalte Aufgebaut
     pointerx = 0
     for pointerRounds in range(1,numberOfRounds+1):#Matrix
         ws['E'+str(3+(pointerRounds-1)*(numberOfClients+2))].value = 'Round '+str(pointerRounds)
