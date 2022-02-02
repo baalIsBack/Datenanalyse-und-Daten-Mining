@@ -3,7 +3,6 @@ import os
 import time
 
 import numpy as np
-import numpy.random
 import torch
 import torch.nn as nn
 import torch.nn.functional
@@ -119,149 +118,6 @@ def test_SaltPepper(model, device, test_loader):
 
     return loss, accuracy
 
-def test_HardSaltPepper(model, device, test_loader):
-    correctly_classified = 0
-    loss = 0
-    with torch.no_grad():
-        for image, target in test_loader:
-            target =  target.to(device)
-            option1 = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option2 = torch.tensor(skimage.util.random_noise(
-                     torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option3 = torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option4 = torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option5 = torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                     torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option6 = torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(
-                      torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            chosenPerturbation = numpy.random.choice([1, 2, 3, 4, 5, 6])
-
-            if (  chosenPerturbation == 1):
-                randomPerturbation = option1
-            elif (  chosenPerturbation == 2):
-                randomPerturbation = option2
-            elif (  chosenPerturbation == 3):
-                randomPerturbation = option3
-            elif (  chosenPerturbation == 4):
-                randomPerturbation = option4
-            elif (  chosenPerturbation == 5):
-                randomPerturbation = option5
-            elif (  chosenPerturbation == 6):
-                randomPerturbation = option6
-
-            images_with_added_noise = randomPerturbation.to(device)
-            outputs = model(images_with_added_noise)
-            _, predicted = torch.max(outputs, 1)
-            loss += nn.CrossEntropyLoss()(outputs, predicted).item()
-            correctly_classified += (predicted == target).sum().item()
-
-    loss /= len(test_loader.dataset)
-    accuracy = 100.0 * correctly_classified / len(test_loader.dataset)
-
-    return loss, accuracy
-
-
-def test_HardSaltPepperWithAutoencoder(model, device, test_loader,autoencoder):
-
-
-    correctly_classified = 0
-    loss = 0
-    with torch.no_grad():
-        for image, target in test_loader:
-            target =  target.to(device)
-            option1 = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True)).to(
-                device)
-            option2 = torch.tensor(skimage.util.random_noise(
-                torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option3 = torch.tensor(skimage.util.random_noise(
-                torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                    , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option4=torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option5=torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            option6=torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(
-                    torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-            chosenPerturbation = numpy.random.choice([1, 2, 3, 4, 5, 6])
-
-            if (chosenPerturbation == 1):
-                randomPerturbation = option1
-            elif (chosenPerturbation == 2):
-                randomPerturbation = option2
-            elif (chosenPerturbation == 3):
-                randomPerturbation = option3
-            elif (chosenPerturbation == 4):
-                randomPerturbation = option4
-            elif (chosenPerturbation == 5):
-                randomPerturbation = option5
-            elif (chosenPerturbation == 6):
-                randomPerturbation = option6
-
-            images_with_added_noise = randomPerturbation.to(device)
-            image = autoencoder(images_with_added_noise);
-            outputs = model(image)
-            _, predicted = torch.max(outputs, 1)
-            loss += nn.CrossEntropyLoss()(outputs, predicted).item()
-            correctly_classified += (predicted == target).sum().item()
-
-    loss /= len(test_loader.dataset)
-    accuracy = 100.0 * correctly_classified / len(test_loader.dataset)
-
-    return loss, accuracy
-
-
-
 # testing accuracy on global model after each round with images perturbed with SaltPepper Noise With Image Preprocessing by Autoencoder
 def test_SaltPepperWithAutoEncoder(model, device, test_loader,autoencoder):
     correctly_classified = 0
@@ -286,8 +142,6 @@ def test_SaltPepperWithAutoEncoder(model, device, test_loader,autoencoder):
 
     return loss, accuracy
 
-
-
 #TODO:Test Methods for Gaussian Noise,Speckle Noise
 "---------------------------------------------Train Functions, starting with train Function for original Images, then for Images with Noise---------------------------------------------------------------------"
 
@@ -307,28 +161,11 @@ def train_client(model, device, optimizer, train_loader, epoch):
     return loss.item()
 
 #TrainClient on Salt Pepper Noise
-def train_client_SaltPepper(model, device, optimizer, train_loader, epoch):
+def train_client_saltPepper(model, device, optimizer, train_loader, epoch):
     for epochX in range(epoch):
         i=0
         for batch, (image, target) in enumerate(train_loader):
             images_with_added_noise = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True)).to(device)
-            optimizer.zero_grad()
-            output = model(images_with_added_noise)
-            loss = nn.CrossEntropyLoss()(output, target)
-            loss.backward()
-            optimizer.step()
-            i+=1
-    return loss.item()
-
-def train_client_HardSaltPepper(model, device, optimizer, train_loader, epoch):
-    for epochX in range(epoch):
-        i=0
-        for batch, (image, target) in enumerate(train_loader):
-            images_with_added_noise = torch.tensor(skimage.util.random_noise(
-                                      torch.tensor(skimage.util.random_noise(torch.tensor(skimage.util.random_noise(image
-                                                                                                , mode='s&p', salt_vs_pepper=0.5,clip=True))
-                                                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True))
-                                                                                                , mode='s&p', salt_vs_pepper=0.5, clip=True)).to(device)
             optimizer.zero_grad()
             output = model(images_with_added_noise)
             loss = nn.CrossEntropyLoss()(output, target)
@@ -474,12 +311,6 @@ def main():
     print('Version 2: Every worker with mainly one number')
     print('Version 3: Equal distribution of all numbers')
     version = input("Input: ")
-    print('\nPlease enter a Number to select a Method:')
-    print('Method 1: pertubation data')
-    print('Method 2: corruption data')
-    print('Method 3: normal')
-    print('Method 4: opponent')
-    method = input("Input: ")
     print('\nIs This a documentation Run? (y / press enter):')
     doc = (True if input("Input: ").lower() == 'y' else False)
     if doc: # Legt die Anzahl der Runs fest
@@ -508,8 +339,7 @@ def main():
         torch.manual_seed(np.round(time.time() * 1000))
 
         # check if GPU is available, otherwise use CPU
-        #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        device = torch.device("cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
 
@@ -721,7 +551,7 @@ def main():
 
         # Starting Training on regular trainmethod, then proceed to train on salt-and-pepper and gaussian noise to make network more robust
         # TODO:Add Train Methods for Gaussian Noise and Speckle Noise to TrainingMethods-List
-        TrainingMethods = [train_client,train_client_SaltPepper,train_client_HardSaltPepper]
+        TrainingMethods = [train_client, train_client_saltPepper]
         i=1
         for currentTrainingMethod in TrainingMethods:
             if(i>1):
@@ -764,6 +594,7 @@ def main():
                     tensorList = torch.tensor(tensorList)
                     print("Local Accuracy Matrix :")
                     print(tensorList)
+                    # Documentation
 
                     # aggregate results of client training and update global- and all client models
                     server_aggregate(global_model, client_models,selectedClients)
@@ -794,16 +625,6 @@ def main():
                           'Image with salt-and-pepper-noise without Denoising Autoencoder :  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
                           test_loss, accuracy))
 
-                test_loss, accuracy = test_HardSaltPepper(global_model, device, test_loader)
-                if (training):
-                    print('Round %d :' % (round + 1),
-                          'Image with hard salt-and-pepper-noise without Denoising Autoencoder : Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
-                              test_loss, accuracy))
-                else:
-                    print('Round %d :' % (round + 1),
-                          'Image with hard salt-and-pepper-noise without Denoising Autoencoder :  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
-                              test_loss, accuracy))
-
                 test_loss, accuracy = test_SaltPepperWithAutoEncoder(global_model, device, test_loader, autoencoder)
                 if (training==True and autoencoder_disabled==False):
                     print('Round %d :' % (round + 1),
@@ -813,16 +634,6 @@ def main():
                     print('Round %d :' % (round + 1),
                           'Image with salt-and-pepper-noise with pre-processing by Denoising Autoencoder :  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
                               test_loss, accuracy))
-                test_loss, accuracy = test_HardSaltPepperWithAutoencoder(global_model, device, test_loader, autoencoder)
-                if (training == True and autoencoder_disabled == False):
-                    print('Round %d :' % (round + 1),
-                          'Image with hard salt-and-pepper-noise with pre-processing by Denoising Autoencoder :  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
-                              test_loss, accuracy))
-                elif (autoencoder_disabled == False):
-                    print('Round %d :' % (round + 1),
-                          'Image with hard salt-and-pepper-noise with pre-processing by Denoising Autoencoder :  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
-                              test_loss, accuracy))
-
             #TODO: Include noise accuracies into table?
                 i+=1
                 if (training):
@@ -842,9 +653,9 @@ def main():
             print("________________________")
             print("Time spent on this run: "+str((time.time()-start)/60)+"min")
 
-            if(training):
-                #Save classification model after training
-                torch.save(global_model, (os.path.dirname(os.path.realpath(__file__)) + ("\\global_model")))
+    if(training):
+        #Save classification model after training
+        torch.save(global_model, (os.path.dirname(os.path.realpath(__file__)) + ("\\global_model")))
 
 
 if __name__ == '__main__':
