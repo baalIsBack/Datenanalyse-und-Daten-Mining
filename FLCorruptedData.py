@@ -764,7 +764,6 @@ def main():
                     tensorList = torch.tensor(tensorList)
                     print("Local Accuracy Matrix :")
                     print(tensorList)
-                    # Documentation
 
                     # aggregate results of client training and update global- and all client models
                     server_aggregate(global_model, client_models,selectedClients)
