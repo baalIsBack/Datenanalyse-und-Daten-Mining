@@ -601,14 +601,6 @@ def main():
                     print("Local Accuracy Matrix :")
                     print(tensorList)
                     # Documentation
-                    #if (doc):
-                    #    for clientid in range(numberOfClients):
-                    #        for testi in (testing_loader__local_client):
-                    #            print('CM '+str(testi)+str(clientid))
-                    #            print(column + str(round + 2))
-                    #            print(clientid)
-                    #            print(testi)
-                    #            wb['CM '+str(testi)+str(clientid)][column + str(round + 2)].value = tensorList[clientid][testi]
 
                     # aggregate results of client training and update global- and all client models
                     server_aggregate(global_model, client_models,selectedClients)

@@ -116,13 +116,13 @@ def server_aggregate(global_model, client_models,selected_clients):
     # get state of global model
     update_global_model = global_model.state_dict()
     # average the weights of selected clients and update global model
-    for weighti in update_global_model.keys():
-        update_global_model[weighti] = torch.stack(
+    for weighti in update_global_model.keys():  # Pro Gewicht im Modell
+        update_global_model[weighti] = torch.stack( #Update das Gewicht mit dem mean (average) des Tensors
             [client_models[selected_clients[i]].state_dict()[weighti].float() for i in range(numberOfSelectedClients)], 0).mean(0)
-        global_model.load_state_dict(update_global_model)
+        global_model.load_state_dict(update_global_model)  # Update des Modells
     # update the models of all clients before next training
     for model in client_models:
-        model.load_state_dict(global_model.state_dict())
+        model.load_state_dict(global_model.state_dict())  # Update des Modells
 
 #Documentation
 def getColumn(ws):
@@ -389,15 +389,6 @@ def main():
             tensorList = torch.tensor(tensorList)
             print("Local Accuracy Matrix :")
             print(tensorList)
-            # Documentation
-            #if (doc):
-            #    for clientid in range(numberOfClients):
-            #        for testi in (testing_loader__local_client):
-            #            print('CM '+str(testi)+str(clientid))
-            #            print(column + str(round + 2))
-            #            print(clientid)
-            #            print(testi)
-            #            wb['CM '+str(testi)+str(clientid)][column + str(round + 2)].value = tensorList[clientid][testi]
 
             # aggregate results of client training and update global- and all client models
             server_aggregate(global_model, client_models,selectedClients)
