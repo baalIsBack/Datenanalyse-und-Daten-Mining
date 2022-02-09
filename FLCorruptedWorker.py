@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional
 import torch.optim
+from geom_median.torch import compute_geometric_median
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -16,9 +17,9 @@ from tqdm import tqdm
 from pprint import pprint
 from torch.utils.data import Dataset
 import random as rand
-import skimage
-from openpyxl import *
-from openpyxl.utils import get_column_letter
+#import skimage
+#from openpyxl import *
+#from openpyxl.utils import get_column_letter
 
 # definition of Parameters
 numberOfEpochs = 3
@@ -29,8 +30,6 @@ numberOfSelectedClients = 4
 numberOfRounds = 20
 # documentation
 path = "Evaluation/FLCorruptedWorker/"
-
-
 
 def getOther(n):
     x = np.random.randint(10)
@@ -61,6 +60,8 @@ class Dataset_Shift(Dataset):
         it = list(self.mnist[idx])
         it[-1] = it[-1]+1 % 10
         return it
+
+
 
 # definition of the Neural Network Model with 4 Layers
 def NeuralNetwork():
@@ -117,9 +118,44 @@ def server_aggregate(global_model, client_models,selected_clients):
     # get state of global model
     update_global_model = global_model.state_dict()
     # average the weights of selected clients and update global model
-    for weighti in update_global_model.keys():  # Pro Gewicht im Modell
-        update_global_model[weighti] = torch.stack( #Update das Gewicht mit dem mean (average) des Tensors
-            [client_models[selected_clients[i]].state_dict()[weighti].float() for i in range(numberOfSelectedClients)], 0).mean(0)
+    weights = update_global_model.keys()
+    for weighti in weights:  # Pro Gewicht im Modell
+
+        xs = []
+        for i in range(numberOfSelectedClients):
+            xs.append(client_models[selected_clients[i]].state_dict()[weighti].float())
+
+        #models = [torch.nn.Linear(20, 10) for _ in range(n)]  # a list of n models
+        points = [list(model.parameters()) for model in client_models]  # list of points, where each point is a list of tensors
+        out = compute_geometric_median(points, weights = torch.ones(len(points)) )
+        #[16,1,3,3]
+        #u = torch.tensor(out.median)
+        print(len(xs))
+        print(len(out.median))
+        a = torch.stack(xs, 0)
+        print(len(a))
+        print(a.size())
+        print(out.median.size())
+        b = torch.stack(out.median, 0)
+        
+        print("-------------------")
+            
+        
+        print("-------------------")
+        print(a.mean(0).size())
+        #print(type(torch.stack(xs, 0).mean(0)))
+        print("-------------------")
+
+        print(list(out.__dict__))
+        #print(out.median)
+        print("-------------------")
+        print( type(b) )
+        print( b )
+        print("-------------------")
+
+        update_global_model[weighti] = t#out.median#torch.stack(xs, 0).mean(0)#Update das Gewicht mit dem mean (average) des Tensors
+        
+
         global_model.load_state_dict(update_global_model)  # Update des Modells
     # update the models of all clients before next training
     for model in client_models:
@@ -307,7 +343,6 @@ def main():
             new_dataset_list = torch.utils.data.random_split(dataset_training,
                                                              [int(dataset_training.data.shape[0] / numberOfClients) for _ in
                                                               range(numberOfClients)])
-
         elif version == '4':
             #Version 4
             #one worker has everything wrong and the others are untouched
@@ -315,17 +350,18 @@ def main():
                                                              [int(dataset_training.data.shape[0] / numberOfClients) for _ in
                                                               range(numberOfClients)])
 
+        
         else:
             exit('Number should be 1, 2, 3 or 4')
 
         # for partX in partition gets 10x train_loader, one for each worker
         # train_loader is a list of DataLoaders, using new_dataset_list instead of partition_of_training_data loads the individually distributed datasets
         train_loader = [DataLoader(partX, batch_size=batchSize, shuffle=True) for partX in new_dataset_list]
-
         if version == '4':
             dataset_corrupt = Dataset_RandomOther(transform)
             train_loader[0] = DataLoader(dataset_corrupt, batch_size=batchSize, shuffle=True)
 
+        
         # further divide data of clients into train and test
         training_loader__local_client = []
         testing_loader__local_client = []
@@ -386,7 +422,7 @@ def main():
             print(tensorList)
 
             # aggregate results of client training and update global- and all client models
-            server_aggregate(global_model, client_models,selectedClients)
+            server_aggregate(global_model, client_models, selectedClients)
 
 
 
