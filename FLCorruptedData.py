@@ -126,12 +126,7 @@ def test_SaltPepperWithAutoEncoder(model, device, test_loader,autoencoder):
         for image, target in test_loader:
             target = target.to(device)
             images_with_added_noise =torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True)).to(device)
-            #Remove Comments to save Noisy/ Denoised Images.
-            #if not os.path.exists('TestImages'):
-            #    os.makedirs('TestImages')
-            #saveImageCostum( images_with_added_noise.cpu().data, name='./TestImages/noisy{}.png'.format(i))
             image = autoencoder( images_with_added_noise)
-            #saveImageCostum(image.cpu().data, name='./TestImages/denoised{}.png'.format(i))
             outputs = model(image)
             _, predicted = torch.max(outputs, 1)
             loss += nn.CrossEntropyLoss()(outputs, predicted).item()
@@ -361,7 +356,7 @@ def main():
             global_model.eval()
             training = False
             print("Loading of  global_model successfull.")
-        except FileNotFoundError:
+        except Exception as e:
             print("No saved global_model: Created new global model for Training.")
             global_model = NeuralNetwork().to(device)
             training = True
@@ -371,10 +366,10 @@ def main():
             autoencoder = torch.load(os.path.dirname(os.path.realpath(__file__)) + "\\AutoEncoder")
             autoencoder.eval()
             print("Loading of Autoencoder successfull.")
-        except FileNotFoundError and _pickle.UnpicklingError:
+        except Exception as e:
             if(training==False):
                 autoencoder_disabled = False
-                print("No saved global_model: Starting Training of Autoencoder.")
+                print("No saved Autoencoder: Starting Training of Autoencoder.")
                 autoencoder = prepareAutoEncoder(trainloader, device, global_model)
                 print("Autoencoder trained.")
             else:
@@ -550,7 +545,7 @@ def main():
         time.sleep(0.1)
 
         # Starting Training on regular trainmethod, then proceed to train on salt-and-pepper and gaussian noise to make network more robust
-        # TODO:Add Train Methods for Gaussian Noise and Speckle Noise to TrainingMethods-List
+
         TrainingMethods = [train_client, train_client_saltPepper]
         i=1
         for currentTrainingMethod in TrainingMethods:
@@ -604,10 +599,6 @@ def main():
                 # test current state of updated global model
                 test_loss, accuracy = test(global_model, device, test_loader)
                 # Documentation
-                if(doc):
-                    wb['Average loss during Training'][column+str(round+2)].value = current_round_loss / numberOfSelectedClients
-                    wb['Global Test loss'][column + str(round + 2)].value = test_loss
-                    wb['Global Accuracy'][column + str(round + 2)].value = accuracy
                 if (training):
                     print('Round %d :' % (round + 1),
                           'Original Image: Average loss during Training: %0.3g | Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
@@ -616,6 +607,11 @@ def main():
                     print('Round %d :' % (round + 1),
                           'Original Image:  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (test_loss, accuracy))
                 test_loss, accuracy = test_SaltPepper(global_model, device, test_loader)
+                if (doc):
+                    wb['Average loss during Training'][
+                        column + str(round + 2)].value = current_round_loss / numberOfSelectedClients
+                    wb['Global Test loss'][column + str(round + 2)].value = test_loss
+                    wb['Global Accuracy'][column + str(round + 2)].value = accuracy
                 if (training):
                     print('Round %d :' % (round + 1),
                           'Image with salt-and-pepper-noise without Denoising Autoencoder : Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
@@ -634,7 +630,7 @@ def main():
                     print('Round %d :' % (round + 1),
                           'Image with salt-and-pepper-noise with pre-processing by Denoising Autoencoder :  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
                               test_loss, accuracy))
-            #TODO: Include noise accuracies into table?
+
                 i+=1
                 if (training):
                     # adapt learning rates with scheduler
