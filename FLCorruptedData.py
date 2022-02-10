@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional
 import torch.optim
+from skimage.util import random_noise
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -122,6 +123,7 @@ def test_SaltPepper(model, device, test_loader):
 def test_SaltPepperWithAutoEncoder(model, device, test_loader,autoencoder):
     correctly_classified = 0
     loss = 0
+
     with torch.no_grad():
         for image, target in test_loader:
             target = target.to(device)
@@ -137,7 +139,47 @@ def test_SaltPepperWithAutoEncoder(model, device, test_loader,autoencoder):
 
     return loss, accuracy
 
-#TODO:Test Methods for Gaussian Noise,Speckle Noise
+def test_GaussianNoise(model,device,test_loader ):
+    correctly_classified = 0
+    loss = 0
+    i=0
+    with torch.no_grad():
+        for image, target in test_loader:
+            target = target.to(device)
+            gauss_img = torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True)).to(device)
+            outputs = model(gauss_img.float())
+            _, predicted = torch.max(outputs, 1)
+            loss += nn.CrossEntropyLoss()(outputs, predicted).item()
+            correctly_classified += (predicted == target).sum().item()
+            i+=1
+
+    loss /= len(test_loader.dataset)
+    accuracy = 100.0 * correctly_classified / len(test_loader.dataset)
+
+    return loss, accuracy
+
+def test_GaussianNoiseAutoencoder(model,device,test_loader ,autoencoder):
+    correctly_classified = 0
+    loss = 0
+    i=0
+    with torch.no_grad():
+        for image, target in test_loader:
+            target = target.to(device)
+            gauss_img = torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True)).to(device)
+            img=autoencoder(gauss_img.float())
+            outputs = model(img)
+            _, predicted = torch.max(outputs, 1)
+            loss += nn.CrossEntropyLoss()(outputs, predicted).item()
+            correctly_classified += (predicted == target).sum().item()
+            i+=1
+
+    loss /= len(test_loader.dataset)
+    accuracy = 100.0 * correctly_classified / len(test_loader.dataset)
+
+    return loss, accuracy
+
+
+
 "---------------------------------------------Train Functions, starting with train Function for original Images, then for Images with Noise---------------------------------------------------------------------"
 
 
@@ -169,7 +211,7 @@ def train_client_saltPepper(model, device, optimizer, train_loader, epoch):
             i+=1
     return loss.item()
 
-#TODO: Training Methods for Gaussian Noise,Speckle Noise
+
 "---------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
 
@@ -606,6 +648,26 @@ def main():
                 else:
                     print('Round %d :' % (round + 1),
                           'Original Image:  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (test_loss, accuracy))
+
+                test_loss, accuracy = test_GaussianNoise(global_model, device, test_loader)
+                if (training):
+                    print('Round %d :' % (round + 1),
+                          'Image with Gaussian Noise: Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
+                              current_round_loss / numberOfSelectedClients, test_loss, accuracy))
+                else:
+                    print('Round %d :' % (round + 1),
+                          'Image with Gaussian Noise:  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
+                          test_loss, accuracy))
+
+                test_loss, accuracy = test_GaussianNoiseAutoencoder(global_model, device, test_loader, autoencoder)
+                if (training):
+                    print('Round %d :' % (round + 1),
+                          'Image with Gaussian Noise with Autoencoder: Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
+                              current_round_loss / numberOfSelectedClients, test_loss, accuracy))
+                else:
+                    print('Round %d :' % (round + 1),
+                          'Image with Gaussian Noise with Autoencoder:  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
+                              test_loss, accuracy))
                 test_loss, accuracy = test_SaltPepper(global_model, device, test_loader)
                 if (doc):
                     wb['Average loss during Training'][

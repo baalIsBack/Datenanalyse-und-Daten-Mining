@@ -179,8 +179,7 @@ def test_HardSaltPepperWithAutoencoder(model, device, test_loader,autoencoder):
     with torch.no_grad():
         for image, target in test_loader:
             target =  target.to(device)
-            option1 = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True)).to(
-                device)
+            option1 = torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
             option2 = torch.tensor(skimage.util.random_noise(
                 torch.tensor(skimage.util.random_noise(image, mode='s&p', salt_vs_pepper=0.5, clip=True))
                 , mode='s&p', salt_vs_pepper=0.5, clip=True))
@@ -244,11 +243,156 @@ def test_HardSaltPepperWithAutoencoder(model, device, test_loader,autoencoder):
     return loss, accuracy
 
 
+def test_GaussianNoise(model,device,test_loader ):
+    correctly_classified = 0
+    loss = 0
+    i=0
+    with torch.no_grad():
+        for image, target in test_loader:
+            target = target.to(device)
+            option1 = torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+            option2 = torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                                                                  , mode = 'gaussian', seed = None, clip = True))
+
+            option3=torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                                                                  , mode = 'gaussian', seed = None, clip = True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+            option4 = torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+            option5 = torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+            option6 = torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(
+                      torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+                                                                  , mode='gaussian', seed=None, clip=True))
+
+            chosenPerturbation = numpy.random.choice([1, 2, 3, 4, 5, 6])
+
+            if (chosenPerturbation == 1):
+                randomPerturbation = option1
+            elif (chosenPerturbation == 2):
+                randomPerturbation = option2
+            elif (chosenPerturbation == 3):
+                randomPerturbation = option3
+            elif (chosenPerturbation == 4):
+                randomPerturbation = option4
+            elif (chosenPerturbation == 5):
+                randomPerturbation = option5
+            elif (chosenPerturbation == 6):
+                randomPerturbation = option6
+
+            gauss_img = randomPerturbation.to(device)
+
+            outputs = model(gauss_img.float())
+            _, predicted = torch.max(outputs, 1)
+            loss += nn.CrossEntropyLoss()(outputs, predicted).item()
+            correctly_classified += (predicted == target).sum().item()
+            i+=1
+
+    loss /= len(test_loader.dataset)
+    accuracy = 100.0 * correctly_classified / len(test_loader.dataset)
+
+    return loss, accuracy
+
+def test_GaussianNoiseAutoencoder(model,device,test_loader ,autoencoder):
+    correctly_classified = 0
+    loss = 0
+    i=0
+    with torch.no_grad():
+        for image, target in test_loader:
+            target = target.to(device)
+            option1 = torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+            option2 = torch.tensor(skimage.util.random_noise(
+                torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                , mode='gaussian', seed=None, clip=True))
+
+            option3 = torch.tensor(skimage.util.random_noise(
+                torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                    , mode='gaussian', seed=None, clip=True))
+                , mode='gaussian', seed=None, clip=True))
+            option4 = torch.tensor(skimage.util.random_noise(
+                torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                        torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                        , mode='gaussian', seed=None, clip=True))
+                    , mode='gaussian', seed=None, clip=True))
+                , mode='gaussian', seed=None, clip=True))
+            option5 = torch.tensor(skimage.util.random_noise(
+                torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                        torch.tensor(skimage.util.random_noise(
+                            torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                            , mode='gaussian', seed=None, clip=True))
+                        , mode='gaussian', seed=None, clip=True))
+                    , mode='gaussian', seed=None, clip=True))
+                , mode='gaussian', seed=None, clip=True))
+            option6 = torch.tensor(skimage.util.random_noise(
+                torch.tensor(skimage.util.random_noise(
+                    torch.tensor(skimage.util.random_noise(
+                        torch.tensor(skimage.util.random_noise(
+                            torch.tensor(skimage.util.random_noise(
+                                torch.tensor(skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True))
+                                , mode='gaussian', seed=None, clip=True))
+                            , mode='gaussian', seed=None, clip=True))
+                        , mode='gaussian', seed=None, clip=True))
+                    , mode='gaussian', seed=None, clip=True))
+                , mode='gaussian', seed=None, clip=True))
+
+            chosenPerturbation = numpy.random.choice([1, 2, 3, 4, 5, 6])
+
+            if (chosenPerturbation == 1):
+                randomPerturbation = option1
+            elif (chosenPerturbation == 2):
+                randomPerturbation = option2
+            elif (chosenPerturbation == 3):
+                randomPerturbation = option3
+            elif (chosenPerturbation == 4):
+                randomPerturbation = option4
+            elif (chosenPerturbation == 5):
+                randomPerturbation = option5
+            elif (chosenPerturbation == 6):
+                randomPerturbation = option6
+
+            gauss_img = randomPerturbation.to(device)
+            img=autoencoder(gauss_img.float())
+            outputs = model(img)
+            _, predicted = torch.max(outputs, 1)
+            loss += nn.CrossEntropyLoss()(outputs, predicted).item()
+            correctly_classified += (predicted == target).sum().item()
+            i += 1
+    loss /= len(test_loader.dataset)
+    accuracy = 100.0 * correctly_classified / len(test_loader.dataset)
+
+    return loss, accuracy
 
 
 
 
-#TODO:Test Methods for Gaussian Noise,Speckle Noise
+
+
 "---------------------------------------------Train Functions, starting with train Function for original Images, then for Images with Noise---------------------------------------------------------------------"
 
 
@@ -297,7 +441,7 @@ def train_client_HardSaltPepper(model, device, optimizer, train_loader, epoch):
             i+=1
     return loss.item()
 
-#TODO: Training Methods for Gaussian Noise,Speckle Noise
+
 "---------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
 
@@ -758,7 +902,24 @@ def main():
                     print('Round %d :' % (round + 1),
                           'Image with hard salt-and-pepper-noise with pre-processing by Denoising Autoencoder :  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
                               test_loss, accuracy))
+                test_loss, accuracy = test_GaussianNoise(global_model, device, test_loader)
+                if (training):
+                    print('Round %d :' % (round + 1),
+                          'Image with Gaussian Noise: Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
+                              current_round_loss / numberOfSelectedClients, test_loss, accuracy))
+                else:
+                    print('Round %d :' % (round + 1),
+                          'Image with Gaussian Noise:  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (test_loss, accuracy))
 
+                test_loss, accuracy = test_GaussianNoiseAutoencoder(global_model, device, test_loader, autoencoder)
+                if (training):
+                    print('Round %d :' % (round + 1),
+                          'Image with Gaussian Noise with Autoencoder: Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
+                              current_round_loss / numberOfSelectedClients, test_loss, accuracy))
+                else:
+                    print('Round %d :' % (round + 1),
+                          'Image with Gaussian Noise with Autoencoder:  Global Test loss: %0.3g | Global Accuracy: %0.3f' % (
+                          test_loss, accuracy))
 
                 i+=1
                 if (training):
