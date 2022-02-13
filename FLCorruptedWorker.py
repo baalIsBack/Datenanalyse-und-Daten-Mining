@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional
 import torch.optim
+from geom_median.torch import compute_geometric_median
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -29,8 +30,6 @@ numberOfSelectedClients = 4
 numberOfRounds = 20
 # documentation
 path = "Evaluation/FLCorruptedWorker/"
-
-
 
 def getOther(n):
     x = np.random.randint(10)
@@ -61,6 +60,8 @@ class Dataset_Shift(Dataset):
         it = list(self.mnist[idx])
         it[-1] = it[-1]+1 % 10
         return it
+
+
 
 # definition of the Neural Network Model with 4 Layers
 def NeuralNetwork():
@@ -111,9 +112,24 @@ def train_client(model, device, optimizer, train_loader, epoch):
             i+=1
     return loss.item()
 
+def server_aggregate_geomedian(global_model, client_models,selected_clients):
+    # get state of global model
+    update_global_model = global_model.state_dict()
+    # average the weights of selected clients and update global model
+    points = [list(model.parameters()) for model in client_models]  # list of points, where each point is a list of tensors
+    geoMedian = compute_geometric_median(points, weights = torch.ones(len(points)) ).median
+    loop_counter = 0
+    for weighti in update_global_model.keys():  # Pro Gewicht im Modell
+        update_global_model[weighti] = geoMedian[loop_counter]  #Update das Gewicht mit dem mean (average) des Tensors
+        global_model.load_state_dict(update_global_model)  # Update des Modells
+        loop_counter = loop_counter + 1
+    # update the models of all clients before next training
+    for model in client_models:
+        model.load_state_dict(global_model.state_dict())  # Update des Modells
+
 
 # aggregates results of the selected and trained client models + takes the mean of the weights to update global model and all client models
-def server_aggregate(global_model, client_models,selected_clients):
+def server_aggregate_mean(global_model, client_models,selected_clients):
     # get state of global model
     update_global_model = global_model.state_dict()
     # average the weights of selected clients and update global model
@@ -124,6 +140,7 @@ def server_aggregate(global_model, client_models,selected_clients):
     # update the models of all clients before next training
     for model in client_models:
         model.load_state_dict(global_model.state_dict())  # Update des Modells
+
 
 #Documentation
 def getColumn(ws):
@@ -139,9 +156,8 @@ def getColumn(ws):
 def main():
     # Gathering Inputs
     print('Please enter a Number to select a Version:')
-    print('Version 1: One worker with mainly 0es')
-    print('Version 2: Every worker with mainly one number')
-    print('Version 3: Equal distribution of all numbers')
+    print('Version 1: One worker is always wrong')
+    print('Version 2: Same as 1, but with geometric median as solution')
     version = input("Input: ")
     print('\nIs This a documentation Run? (y / press enter):')
     doc = (True if input("Input: ").lower() == 'y' else False)
@@ -184,148 +200,26 @@ def main():
         # get the labels of each tuple (image, label) in the dataset
         labels = dataset_training.train_labels
 
+        
+        if(version != '1' and version != '2'):
+            exit('Number should be 1, or 2')
 
-
-        if version == '1':
-            # Version 1
-            # one worker has the majority of one number but still a few pictures of other numbers
-
-            # get the indices of all tuples, where the label is '0'
-            label_zero_indices = (labels == 0).nonzero()
-
-            # from tensor to list with flatten().tolist()
-            label_zero_indices = label_zero_indices.flatten().tolist()
-            # print(len(label_zero_indices)) = 5923
-
-            # get a subset of the dataset with the filtered indices
-            label_zero_subset = torch.utils.data.Subset(dataset_training, label_zero_indices)
-
-            # random_split expects a dataset and the wanted length, returns 10 non-overlapping new datasets, meaning a list of datasets?
-            partition_of_training_data = torch.utils.data.random_split(label_zero_subset,
-                                                                       [5023, 100, 100, 100, 100, 100, 100, 100, 100,
-                                                                        100])  # 5023 + 9*100 = 5923
-
-            # make a subset of the mnist dataset without zeroes: indices of all tuples where the label is NOT '0'
-            label_not_zero_indices = (labels != 0).nonzero()
-            label_not_zero_indices = label_not_zero_indices.flatten().tolist()
-            # print(len(label_not_zero_indices)) = 54077
-
-            # make the second subset without zeroes
-            label_not_zero_subset = torch.utils.data.Subset(dataset_training, label_not_zero_indices)
-            partition_of_training_data2 = torch.utils.data.random_split(label_not_zero_subset,
-                                                                        [977, 5900, 5900, 5900, 5900, 5900, 5900, 5900,
-                                                                         5900, 5900])  # 977 + 9*5900 = 54077
-
-            # use ConcatDataset to join a list of Datasets
-            new_dataset_list = []
-            for i in range(10):
-                new_dataset_list.append(
-                    torch.utils.data.ConcatDataset([partition_of_training_data[i], partition_of_training_data2[i]]))
-
-        elif version == '2':
-            # get the indices of the numbers
-            label_zero_indices = (labels == 0).nonzero()
-            label_one_indices = (labels == 1).nonzero()
-            label_two_indices = (labels == 2).nonzero()
-            label_three_indices = (labels == 3).nonzero()
-            label_four_indices = (labels == 4).nonzero()
-            label_five_indices = (labels == 5).nonzero()
-            label_six_indices = (labels == 6).nonzero()
-            label_seven_indices = (labels == 7).nonzero()
-            label_eight_indices = (labels == 8).nonzero()
-            label_nine_indices = (labels == 9).nonzero()
-
-            # from tensor to list
-            label_zero_indices = label_zero_indices.flatten().tolist()
-            label_one_indices = label_one_indices.flatten().tolist()
-            label_two_indices = label_two_indices.flatten().tolist()
-            label_three_indices = label_three_indices.flatten().tolist()
-            label_four_indices = label_four_indices.flatten().tolist()
-            label_five_indices = label_five_indices.flatten().tolist()
-            label_six_indices = label_six_indices.flatten().tolist()
-            label_seven_indices = label_seven_indices.flatten().tolist()
-            label_eight_indices = label_eight_indices.flatten().tolist()
-            label_nine_indices = label_nine_indices.flatten().tolist()
-
-            # make subsets for each number
-            label_zero_subset = torch.utils.data.Subset(dataset_training, label_zero_indices)
-            label_one_subset = torch.utils.data.Subset(dataset_training, label_one_indices)
-            label_two_subset = torch.utils.data.Subset(dataset_training, label_two_indices)
-            label_three_subset = torch.utils.data.Subset(dataset_training, label_three_indices)
-            label_four_subset = torch.utils.data.Subset(dataset_training, label_four_indices)
-            label_five_subset = torch.utils.data.Subset(dataset_training, label_five_indices)
-            label_six_subset = torch.utils.data.Subset(dataset_training, label_six_indices)
-            label_seven_subset = torch.utils.data.Subset(dataset_training, label_seven_indices)
-            label_eight_subset = torch.utils.data.Subset(dataset_training, label_eight_indices)
-            label_nine_subset = torch.utils.data.Subset(dataset_training, label_nine_indices)
-
-            # get the count for each number
-            # print(len(label_zero_indices)) = 5923
-            # print(len(label_one_indices)) = 6742
-            # print(len(label_two_indices)) = 5958
-            # print(len(label_three_indices)) = 6131
-            # print(len(label_four_indices)) = 5842
-            # print(len(label_five_indices)) = 5421
-            # print(len(label_six_indices)) = 5918
-            # print(len(label_seven_indices)) = 6265
-            # print(len(label_eight_indices)) = 5851
-            # print(len(label_nine_indices)) = 5949
-
-            # split the numbers for the workers
-            partition_of_training_data0 = torch.utils.data.random_split(label_zero_subset,
-                                                                        [5023, 100, 100, 100, 100, 100, 100, 100, 100, 100])
-            partition_of_training_data1 = torch.utils.data.random_split(label_one_subset,
-                                                                        [100, 5842, 100, 100, 100, 100, 100, 100, 100, 100])
-            partition_of_training_data2 = torch.utils.data.random_split(label_two_subset,
-                                                                        [100, 100, 5058, 100, 100, 100, 100, 100, 100, 100])
-            partition_of_training_data3 = torch.utils.data.random_split(label_three_subset,
-                                                                        [100, 100, 100, 5231, 100, 100, 100, 100, 100, 100])
-            partition_of_training_data4 = torch.utils.data.random_split(label_four_subset,
-                                                                        [100, 100, 100, 100, 4942, 100, 100, 100, 100, 100])
-            partition_of_training_data5 = torch.utils.data.random_split(label_five_subset,
-                                                                        [100, 100, 100, 100, 100, 4521, 100, 100, 100, 100])
-            partition_of_training_data6 = torch.utils.data.random_split(label_six_subset,
-                                                                        [100, 100, 100, 100, 100, 100, 5018, 100, 100, 100])
-            partition_of_training_data7 = torch.utils.data.random_split(label_seven_subset,
-                                                                        [100, 100, 100, 100, 100, 100, 100, 5365, 100, 100])
-            partition_of_training_data8 = torch.utils.data.random_split(label_eight_subset,
-                                                                        [100, 100, 100, 100, 100, 100, 100, 100, 4951, 100])
-            partition_of_training_data9 = torch.utils.data.random_split(label_nine_subset,
-                                                                        [100, 100, 100, 100, 100, 100, 100, 100, 100, 5049])
-
-            # concat datasets
-            new_dataset_list = []
-            for i in range(10):
-                new_dataset_list.append(torch.utils.data.ConcatDataset(
-                    [partition_of_training_data0[i], partition_of_training_data1[i], partition_of_training_data2[i],
-                     partition_of_training_data3[i], partition_of_training_data4[i], partition_of_training_data5[i],
-                     partition_of_training_data6[i], partition_of_training_data7[i], partition_of_training_data8[i],
-                     partition_of_training_data9[i]]))
-
-        elif version == '3':
-            # Dividing the training data into num_clients, with each client having equal number of images
-            new_dataset_list = torch.utils.data.random_split(dataset_training,
+        #set the dataset for one worker to the corrupt dataset
+        #one corrupt worker has everything wrong and the others are untouched
+        new_dataset_list = torch.utils.data.random_split(dataset_training,
                                                              [int(dataset_training.data.shape[0] / numberOfClients) for _ in
                                                               range(numberOfClients)])
 
-        elif version == '4':
-            #Version 4
-            #one worker has everything wrong and the others are untouched
-            new_dataset_list = torch.utils.data.random_split(dataset_training,
-                                                             [int(dataset_training.data.shape[0] / numberOfClients) for _ in
-                                                              range(numberOfClients)])
-
-        else:
-            exit('Number should be 1, 2, 3 or 4')
 
         # for partX in partition gets 10x train_loader, one for each worker
         # train_loader is a list of DataLoaders, using new_dataset_list instead of partition_of_training_data loads the individually distributed datasets
         train_loader = [DataLoader(partX, batch_size=batchSize, shuffle=True) for partX in new_dataset_list]
+        
+        #actually set the corrupt worker
+        dataset_corrupt = Dataset_RandomOther(transform)
+        train_loader[0] = DataLoader(dataset_corrupt, batch_size=batchSize, shuffle=True)
 
-        if version == '4':
-            dataset_corrupt = Dataset_RandomOther(transform)
-            train_loader[0] = DataLoader(dataset_corrupt, batch_size=batchSize, shuffle=True)
-
+        
         # further divide data of clients into train and test
         training_loader__local_client = []
         testing_loader__local_client = []
@@ -386,7 +280,10 @@ def main():
             print(tensorList)
 
             # aggregate results of client training and update global- and all client models
-            server_aggregate(global_model, client_models,selectedClients)
+            if version == '1':
+                server_aggregate_mean(global_model, client_models, selectedClients)
+            elif version == '2':
+                server_aggregate_geomedian(global_model, client_models, selectedClients)
 
 
 
