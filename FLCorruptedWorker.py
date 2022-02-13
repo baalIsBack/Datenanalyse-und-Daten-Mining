@@ -17,9 +17,9 @@ from tqdm import tqdm
 from pprint import pprint
 from torch.utils.data import Dataset
 import random as rand
-#import skimage
-#from openpyxl import *
-#from openpyxl.utils import get_column_letter
+import skimage
+from openpyxl import *
+from openpyxl.utils import get_column_letter
 
 # definition of Parameters
 numberOfEpochs = 3
