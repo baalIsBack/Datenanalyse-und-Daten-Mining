@@ -28,6 +28,7 @@ learningrate = 0.001
 numberOfClients = 10
 numberOfSelectedClients = 4
 numberOfRounds = 20
+numberOfBadClients = 3
 # documentation
 path = "Evaluation/FLCorruptedWorker/"
 
@@ -217,7 +218,8 @@ def main():
         
         #actually set the corrupt worker
         dataset_corrupt = Dataset_RandomOther(transform)
-        train_loader[0] = DataLoader(dataset_corrupt, batch_size=batchSize, shuffle=True)
+        for i in range(numberOfBadClients):
+            train_loader[i] = DataLoader(dataset_corrupt, batch_size=batchSize, shuffle=True)
 
         
         # further divide data of clients into train and test
