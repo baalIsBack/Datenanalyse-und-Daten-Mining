@@ -350,13 +350,10 @@ def main():
             # Version 1
             # one worker has the majority of one number but still a few pictures of other numbers
 
-            # get the indices of all tuples, where the label is '0'
-            label_zero_indices = (labels == 0).nonzero()
-
-            # from tensor to list with flatten().tolist()
-            label_zero_indices = label_zero_indices.flatten().tolist()
+            # get the indices of all tuples, where the label is '0' and convert from tensor to list with flatten().tolist()
+            label_zero_indices = (labels == 0).nonzero().flatten().tolist()
+            
             # print(len(label_zero_indices)) = 5923
-
             # get a subset of the dataset with the filtered indices
             label_zero_subset = torch.utils.data.Subset(dataset_training, label_zero_indices)
 
@@ -383,29 +380,17 @@ def main():
                     torch.utils.data.ConcatDataset([partition_of_training_data[i], partition_of_training_data2[i]]))
 
         elif version == '2':
-            # get the indices of the numbers
-            label_zero_indices = (labels == 0).nonzero()
-            label_one_indices = (labels == 1).nonzero()
-            label_two_indices = (labels == 2).nonzero()
-            label_three_indices = (labels == 3).nonzero()
-            label_four_indices = (labels == 4).nonzero()
-            label_five_indices = (labels == 5).nonzero()
-            label_six_indices = (labels == 6).nonzero()
-            label_seven_indices = (labels == 7).nonzero()
-            label_eight_indices = (labels == 8).nonzero()
-            label_nine_indices = (labels == 9).nonzero()
-
-            # from tensor to list
-            label_zero_indices = label_zero_indices.flatten().tolist()
-            label_one_indices = label_one_indices.flatten().tolist()
-            label_two_indices = label_two_indices.flatten().tolist()
-            label_three_indices = label_three_indices.flatten().tolist()
-            label_four_indices = label_four_indices.flatten().tolist()
-            label_five_indices = label_five_indices.flatten().tolist()
-            label_six_indices = label_six_indices.flatten().tolist()
-            label_seven_indices = label_seven_indices.flatten().tolist()
-            label_eight_indices = label_eight_indices.flatten().tolist()
-            label_nine_indices = label_nine_indices.flatten().tolist()
+            # get the indices of the numbers and convert from tensor to list
+            label_zero_indices = (labels == 0).nonzero().flatten().tolist()
+            label_one_indices = (labels == 1).nonzero().flatten().tolist()
+            label_two_indices = (labels == 2).nonzero().flatten().tolist()
+            label_three_indices = (labels == 3).nonzero().flatten().tolist()
+            label_four_indices = (labels == 4).nonzero().flatten().tolist()
+            label_five_indices = (labels == 5).nonzero().flatten().tolist()
+            label_six_indices = (labels == 6).nonzero().flatten().tolist()
+            label_seven_indices = (labels == 7).nonzero().flatten().tolist()
+            label_eight_indices = (labels == 8).nonzero().flatten().tolist()
+            label_nine_indices = (labels == 9).nonzero().flatten().tolist()
 
             # make subsets for each number
             label_zero_subset = torch.utils.data.Subset(dataset_training, label_zero_indices)
@@ -418,19 +403,7 @@ def main():
             label_seven_subset = torch.utils.data.Subset(dataset_training, label_seven_indices)
             label_eight_subset = torch.utils.data.Subset(dataset_training, label_eight_indices)
             label_nine_subset = torch.utils.data.Subset(dataset_training, label_nine_indices)
-
-            # get the count for each number
-            # print(len(label_zero_indices)) = 5923
-            # print(len(label_one_indices)) = 6742
-            # print(len(label_two_indices)) = 5958
-            # print(len(label_three_indices)) = 6131
-            # print(len(label_four_indices)) = 5842
-            # print(len(label_five_indices)) = 5421
-            # print(len(label_six_indices)) = 5918
-            # print(len(label_seven_indices)) = 6265
-            # print(len(label_eight_indices)) = 5851
-            # print(len(label_nine_indices)) = 5949
-
+            
             # split the numbers for the workers
             partition_of_training_data0 = torch.utils.data.random_split(label_zero_subset,
                                                                         [5023, 100, 100, 100, 100, 100, 100, 100, 100, 100])
